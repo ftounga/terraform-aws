@@ -64,7 +64,7 @@ resource "aws_vpc_peering_connection" "peer" {
 resource "aws_vpc_peering_connection_accepter" "accept_peering" {
   provider                  = aws.region-worker
   vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
-  auto_accept = true
+  auto_accept               = true
 }
 
 resource "aws_route_table" "internet_route_master" {
