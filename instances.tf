@@ -32,6 +32,12 @@ resource "aws_instance" "jenkins-master" {
   tags = {
     Name = "jenkins_master_tf"
   }
+  provisioner "local-exec" {
+    command = <<EOF
+aws --profile ${var.profile} ec2 wait instance-status-ok --region ${var.region-master} --instance-ids ${self.id}
+ansible-playbook --extra-vars 'passed_in_hosts=tag_Name_${self.tags.Name}' ansible_templates/jenkins-master.yml
+EOF
+  }
 
   depends_on = [aws_main_route_table_association.set-master-default-rt-assoc]
 }
@@ -47,9 +53,15 @@ resource "aws_instance" "jenkins-worker" {
   count                       = var.worker-count
 
   tags = {
-    Name = join("-", ["jenkins_worker_tf_", count.index + 1])
+    Name = join("_", ["jenkins_worker_tf", count.index + 1])
   }
 
+  provisioner "local-exec" {
+    command = <<EOF
+aws --profile ${var.profile} ec2 wait instance-status-ok --region ${var.region-worker} --instance-ids ${self.id}
+ansible-playbook --extra-vars 'passed_in_hosts=tag_Name_${self.tags.Name}' ansible_templates/jenkins-worker.yml
+EOF
+  }
   depends_on = [aws_main_route_table_association.set-worker-default-rt-assoc, aws_instance.jenkins-master]
 }
 
